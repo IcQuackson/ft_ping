@@ -15,6 +15,11 @@ BIN_DIR = bin
 # Source and Template Files
 C_SRCS := $(SRC_DIR)/main.c \
 		  $(SRC_DIR)/arg_parser.c \
+		  $(SRC_DIR)/logger.c \
+		  $(SRC_DIR)/ft_ping.c \
+
+# Script Files
+SCRIPT := $(SRC_DIR)/test_script.sh
 
 # Object Files
 OBJS    =   $(C_SRCS:$(SRC_DIR)/%.c=$(BIN_DIR)/%.o)
@@ -60,14 +65,7 @@ run: all
 rerun: re run
 
 test: all
-	./$(NAME) localhost -v -f  --ip-timestamp
-
-test_valgrind: all
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) -v -f --ttl 64 --ip-timestamp
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) --help
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) -n -W -r
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) -T --ttl 128
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) --ip-timestamp -l -s
+	./$(SCRIPT)
 
 gdb:    all
 		gdb --args ./$(NAME) $(ARGS)

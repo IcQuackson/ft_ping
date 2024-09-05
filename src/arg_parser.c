@@ -3,8 +3,8 @@
 #include <getopt.h>
 #include <string.h>
 #include "arg_parser.h"
+#include "logger.h"
 
-// Function to display usage
 void display_usage()
 {
     printf("Usage: program [options]\n");
@@ -23,14 +23,13 @@ void display_usage()
     printf("      --ip-timestamp        IP timestamp option\n");
 }
 
-// Function to parse command-line arguments
+
 void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 {
 
     int opt;
     int option_index = 0;
 
-    // Array of long options
     struct option long_options[] =
 	{
         {"verbose", no_argument, 0, 'v'},
@@ -40,68 +39,75 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
         {0, 0, 0, 0}
     };
 
-    // Parse the command-line arguments
     while ((opt = getopt_long(argc, argv, "v?flnwWprTsTc:", long_options, &option_index)) != -1)
 	{
         switch (opt) {
 			case 'v':
-				printf("Verbose mode enabled\n");
+				log_message(INFO, "Option -v selected");
 				arguments->options.verbose = 1;
 				break;
 			case '?':
 				display_usage();
 				exit(0);
 			case 'f':
-				printf("Option -f selected\n");
+				log_message(INFO, "Option -f selected");
 				arguments->options.f = 1;
 				break;
 			case 'l':
-				printf("Option -l selected\n");
+				log_message(INFO, "Option -l selected");
 				arguments->options.l = 1;
 				break;
 			case 'n':
-				printf("Option -n selected\n");
+				log_message(INFO, "Option -n selected");
 				arguments->options.n = 1;
 				break;
 			case 'w':
-				printf("Option -w selected\n");
+				log_message(INFO, "Option -w selected");
 				arguments->options.w = 1;
 				break;
 			case 'W':
-				printf("Option -W selected\n");
+				log_message(INFO, "Option -W selected");
 				arguments->options.W = 1;
 				break;
 			case 'p':
-				printf("Option -p selected\n");
+				log_message(INFO, "Option -p selected");
 				arguments->options.p = 1;
 				break;
 			case 'r':
-				printf("Option -r selected\n");
+				log_message(INFO, "Option -r selected");
 				arguments->options.r = 1;
 				break;
 			case 's':
-				printf("Option -s selected\n");
+				log_message(INFO, "Option -s selected");
 				arguments->options.s = 1;
 				break;
 			case 'T':
-				printf("Option -T selected\n");
+				log_message(INFO, "Option -T selected");
 				arguments->options.T = 1;
 				break;
 			case 'c':
-				printf("Option -c with value '%s' selected\n", optarg);
+				log_message(INFO, "Option -c with value '%s' selected", optarg);
 				arguments->options.c = 1;
 				arguments->count = atoi(optarg);
+				if (arguments->count <= 0) {
+                    fprintf(stderr, "Invalid argument for -c. Must be a positive integer.\n");
+                    exit(EXIT_FAILURE);
+                }
 				break;
 			case 0: // Case for long options without short equivalents
 				if (strcmp(long_options[option_index].name, "ttl") == 0)
 				{
-					printf("Option --ttl with value '%s' selected\n", optarg);
+					log_message(INFO, "Option --ttl with value '%s' selected", optarg);
 					arguments->options.ttl = 1;
 					arguments->ttl = atoi(optarg);
+					if (arguments->ttl <= 0) {
+                        fprintf(stderr, "Invalid argument for --ttl. Must be a positive integer.\n");
+                        exit(EXIT_FAILURE);
+                    }
 				}
 				else if (strcmp(long_options[option_index].name, "ip-timestamp") == 0)
 				{
-					printf("Option --ip-timestamp selected\n");
+					log_message(INFO, "Option --ip-timestamp selected");
 					arguments->options.ip_timestamp = 1;
 				}
 				break;
@@ -111,16 +117,21 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 		}
     }
 
-    // Remaining command-line arguments (if any) can be processed here
-    if (optind < argc)
+	parse_host(argc, arguments, argv);
+}
+
+void parse_host(int argc, t_arguments *arguments, char *argv[])
+{
+	if (optind < argc && optind + 1 == argc)
 	{
-        printf("Non-option arguments:\n");
-        while (optind < argc)
-		{
-            printf("%s\n", argv[optind++]);
-        }
-		// TODO limit to 1 argument?
-    }
+		arguments->host = argv[optind];
+		printf("Destination address: %s\n", arguments->host);
+	}
+	else if (optind < argc)
+	{
+		printf("ping: usage error: Too many arguments\n");
+		exit(EXIT_FAILURE);
+	}
 	else
 	{
 		printf("ping: usage error: Destination address required\n");

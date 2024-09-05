@@ -27,6 +27,7 @@ typedef struct s_options {
 
 typedef struct s_arguments {
 	t_options options;
+	char *host;
 	char *filename;
 	int count;
 	int ttl;
@@ -36,7 +37,10 @@ void display_usage();
 
 void parse_arguments(int argc, char *argv[], t_arguments *arguments);
 
+void parse_host(int argc, t_arguments *arguments, char *argv[]);
+
 void print_arguments(t_arguments *arguments);
 
+void parse_host(int argc, t_arguments *arguments, char *argv[]);
 
 #endif
