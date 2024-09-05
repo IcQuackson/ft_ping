@@ -17,13 +17,17 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <netdb.h>
 #include "arg_parser.h"
 #include "logger.h"
 
 #define TIMEOUT 1  // Timeout interval in seconds for receiving an ICMP reply
 
-unsigned short checksum(void *b, int len);
-
 void ft_ping(t_arguments *arguments);
+void get_ip_and_host(t_arguments *arguments, char ip_host[16], char dns_host[1025]);
+unsigned short checksum(void *b, int len);
+int is_valid_ipv4(char *hostname);
+void lookup_dns(const char *hostname);
+void convert_hostname_to_ip(const char *hostname, char *ip);
 
 #endif

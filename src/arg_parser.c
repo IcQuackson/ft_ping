@@ -125,7 +125,7 @@ void parse_host(int argc, t_arguments *arguments, char *argv[])
 	if (optind < argc && optind + 1 == argc)
 	{
 		arguments->host = argv[optind];
-		printf("Destination address: %s\n", arguments->host);
+		log_message(INFO, "Host: %s", arguments->host);
 	}
 	else if (optind < argc)
 	{

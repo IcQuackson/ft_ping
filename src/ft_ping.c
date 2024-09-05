@@ -18,6 +18,11 @@ unsigned short checksum(void *b, int len) {
 
 void ft_ping(t_arguments *arguments)
 {
+	char dns_host[NI_MAXHOST];
+	char ip_host[INET_ADDRSTRLEN];
+
+	get_ip_and_host(arguments, ip_host, dns_host);
+
 	int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP); // Create a raw socket to send ICMP packets
 	if (sockfd < 0)
 	{
@@ -29,7 +34,7 @@ void ft_ping(t_arguments *arguments)
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET; // IPv4
-	inet_pton(AF_INET, arguments->host, &addr.sin_addr); // Convert IPv4 address from text to binary form
+	inet_pton(AF_INET, ip_host, &addr.sin_addr); // Convert IPv4 address from text to binary form
 
 	// Create ICMP packet
 	struct icmp icmphdr;
@@ -52,7 +57,7 @@ void ft_ping(t_arguments *arguments)
 	int valid_reply_received = 0;
 
 	// Print the ICMP packet information in format: PING <DNS NAME> (<host>) <payload size>(<total size>) bytes of data.
-	printf("PING %s (%s) %ld(%ld) bytes of data.\n", arguments->host, arguments->host, sizeof(icmphdr.icmp_data), sizeof(icmphdr));
+	printf("PING %s (%s) %ld(%ld) bytes of data.\n", dns_host, ip_host, sizeof(icmphdr.icmp_data), sizeof(icmphdr));
 
 	while (1)
 	{
@@ -121,5 +126,47 @@ void ft_ping(t_arguments *arguments)
 
 
     close(sockfd);
-	
 }
+
+void get_ip_and_host(t_arguments *arguments, char ip_host[INET_ADDRSTRLEN], char dns_host[NI_MAXHOST])
+{
+	if (is_valid_ipv4(arguments->host))
+	{
+		strncpy(ip_host, arguments->host, INET_ADDRSTRLEN);
+		strncpy(dns_host, arguments->host, NI_MAXHOST);
+	}
+	else
+	{
+		strncpy(dns_host, arguments->host, NI_MAXHOST);
+		convert_hostname_to_ip(dns_host, ip_host);
+	}
+}
+
+int is_valid_ipv4(char *hostname)
+{
+	struct in_addr ipv4addr;
+
+	return inet_pton(AF_INET, hostname, &ipv4addr) == 1;
+}
+
+void convert_hostname_to_ip(const char *hostname, char *ip)
+{
+	struct hostent *he;
+	struct in_addr **addr_list;
+	int i;
+
+	if ((he = gethostbyname(hostname)) == NULL)
+	{
+		herror("gethostbyname");
+		exit(EXIT_FAILURE);
+	}
+
+	addr_list = (struct in_addr **) he->h_addr_list;
+
+	for (i = 0; addr_list[i] != NULL; i++)
+	{
+		strncpy(ip, inet_ntoa(*addr_list[i]), INET_ADDRSTRLEN);
+		return;
+	}
+}
+
