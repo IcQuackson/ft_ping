@@ -43,4 +43,6 @@ void print_arguments(t_arguments *arguments);
 
 void parse_host(int argc, t_arguments *arguments, char *argv[]);
 
+void check_arguments(t_arguments *arguments);
+
 #endif

@@ -44,9 +44,6 @@ void ft_ping(t_arguments *arguments)
 	icmphdr.icmp_id = htons(getpid() & 0xFFFF); // 0xFFFF is a mask to get only the last 16 bits
 	icmphdr.icmp_seq = 0;
 	icmphdr.icmp_cksum = checksum(&icmphdr, sizeof(icmphdr));
-	// Add timestamp to the ICMP packet and pad the rest of the packet with zeros
-	memset(icmphdr.icmp_data, 0, sizeof(icmphdr.icmp_data));
-	gettimeofday((struct timeval *)icmphdr.icmp_data, NULL);
 
 	char recv_buff[1024];
 	struct sockaddr_in r_addr;
@@ -61,17 +58,7 @@ void ft_ping(t_arguments *arguments)
 
 	while (1)
 	{
-		log_message(INFO, "Sending ICMP ECHO_REQUEST");
-		icmphdr.icmp_seq++;
-		icmphdr.icmp_cksum = 0;
-		icmphdr.icmp_cksum = checksum(&icmphdr, sizeof(icmphdr));
-
-		if (sendto(sockfd, &icmphdr, sizeof(icmphdr), 0, (struct sockaddr *) &addr, sizeof(addr)) <= 0)
-		{
-			perror("sendto");
-			continue;
-		}
-		printf("ICMP ECHO_REQUEST sent to %s: icmp_seq%d\n", arguments->host, icmphdr.icmp_seq);
+		send_icmp_request(sockfd, &addr, &icmphdr);
 
 		while (!valid_reply_received) {
 			FD_ZERO(&readfds);
@@ -88,7 +75,7 @@ void ft_ping(t_arguments *arguments)
 			}
 			else if (retval)
 			{
-				log_message(DEBUG, "Data is available now.");
+                addrlen = sizeof(r_addr);
 				int n = recvfrom(sockfd, recv_buff, sizeof(recv_buff) - 1, 0, (struct sockaddr *)&r_addr, &addrlen);
 				if (n > 0)
 				{
@@ -104,7 +91,10 @@ void ft_ping(t_arguments *arguments)
                         icmp_hdr->icmp_id == htons(getpid() & 0xFFFF) &&
                         icmp_hdr->icmp_seq == icmphdr.icmp_seq)
 					{
-						printf("ICMP ECHO_REPLY received: seq=%d\n", icmp_hdr->icmp_seq);
+						log_message(DEBUG, "ICMP ECHO_REPLY received: seq=%d\n", icmp_hdr->icmp_seq);
+
+                        print_ping_stats(icmp_hdr, ip_hdr, &r_addr, n);
+						
 						valid_reply_received = 1;
 					}
 				}
@@ -126,6 +116,38 @@ void ft_ping(t_arguments *arguments)
 
 
     close(sockfd);
+}
+
+void print_ping_stats(struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockaddr_in *r_addr, int n_bytes)
+
+{
+	struct timeval time_received, rtt;
+    gettimeofday(&time_received, NULL);
+
+    struct timeval *time_sent_in_reply = (struct timeval *) icmphdr->icmp_data;
+
+    timersub(&time_received, time_sent_in_reply, &rtt);
+    printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", n_bytes, inet_ntoa(r_addr->sin_addr), icmphdr->icmp_seq, ip_hdr->ttl, rtt.tv_sec * 1000.0 + rtt.tv_usec / 1000.0);
+}
+
+
+void send_icmp_request(int sockfd, struct sockaddr_in *addr, struct icmp *icmphdr)
+{
+    struct timeval time_sent;
+	log_message(INFO, "Sending ICMP ECHO_REQUEST");
+    icmphdr->icmp_seq++;
+    icmphdr->icmp_cksum = 0;
+    gettimeofday(&time_sent, NULL);
+    memcpy(icmphdr->icmp_data, &time_sent, sizeof(time_sent));
+    icmphdr->icmp_cksum = checksum(icmphdr, sizeof(struct icmp));
+
+    if (sendto(sockfd, icmphdr, sizeof(*icmphdr), 0, (struct sockaddr *) addr, sizeof(*addr)) <= 0)
+    {
+        perror("sendto");
+        exit(EXIT_FAILURE);
+    }
+
+    log_message(DEBUG, "ICMP ECHO_REQUEST sent to %s: icmp_seq%d", inet_ntoa(addr->sin_addr), icmphdr->icmp_seq);
 }
 
 void get_ip_and_host(t_arguments *arguments, char ip_host[INET_ADDRSTRLEN], char dns_host[NI_MAXHOST])
@@ -170,3 +192,9 @@ void convert_hostname_to_ip(const char *hostname, char *ip)
 	}
 }
 
+void get_timestamp(char *timestamp)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	strftime(timestamp, 20, "%Y-%m-%d %H:%M:%S", localtime(&tv.tv_sec));
+}

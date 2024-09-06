@@ -89,10 +89,6 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 				log_message(INFO, "Option -c with value '%s' selected", optarg);
 				arguments->options.c = 1;
 				arguments->count = atoi(optarg);
-				if (arguments->count <= 0) {
-                    fprintf(stderr, "Invalid argument for -c. Must be a positive integer.\n");
-                    exit(EXIT_FAILURE);
-                }
 				break;
 			case 0: // Case for long options without short equivalents
 				if (strcmp(long_options[option_index].name, "ttl") == 0)
@@ -100,10 +96,6 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 					log_message(INFO, "Option --ttl with value '%s' selected", optarg);
 					arguments->options.ttl = 1;
 					arguments->ttl = atoi(optarg);
-					if (arguments->ttl <= 0) {
-                        fprintf(stderr, "Invalid argument for --ttl. Must be a positive integer.\n");
-                        exit(EXIT_FAILURE);
-                    }
 				}
 				else if (strcmp(long_options[option_index].name, "ip-timestamp") == 0)
 				{
@@ -120,6 +112,20 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 	parse_host(argc, arguments, argv);
 }
 
+void check_arguments(t_arguments *arguments)
+{
+	if (arguments->options.c == 1 && arguments->count <= 0)
+	{
+		fprintf(stderr, "Invalid argument for -c. Must be a positive integer.\n");
+		exit(EXIT_FAILURE);
+	}
+	if (arguments->options.ttl == 1 && arguments->ttl <= 0)
+	{
+		fprintf(stderr, "Invalid argument for --ttl. Must be a positive integer.\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
 void parse_host(int argc, t_arguments *arguments, char *argv[])
 {
 	if (optind < argc && optind + 1 == argc)
@@ -129,12 +135,12 @@ void parse_host(int argc, t_arguments *arguments, char *argv[])
 	}
 	else if (optind < argc)
 	{
-		printf("ping: usage error: Too many arguments\n");
+		fprintf(stderr, "ping: usage error: Too many arguments\n");
 		exit(EXIT_FAILURE);
 	}
 	else
 	{
-		printf("ping: usage error: Destination address required\n");
+		fprintf(stderr, "ping: usage error: Destination address required\n");
 		exit(EXIT_FAILURE);
 	}
 }
