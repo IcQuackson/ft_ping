@@ -22,6 +22,8 @@
 
 #define TIMEOUT 1  // Timeout interval in seconds for receiving an ICMP reply
 #define PAYLOAD_SIZE 56
+#define NI_MAXHOST 1025
+#define INET_ADDRSTRLEN 16
 
 typedef struct s_ping_stats {
 	int packets_sent;
@@ -34,6 +36,9 @@ typedef struct s_ping_stats {
 
 typedef struct s_echo_request {
 	struct icmp *icmphdr;
+	struct sockaddr_in *addr;
+	char dns_host[NI_MAXHOST];
+	char ip_host[INET_ADDRSTRLEN];
 	char data[PAYLOAD_SIZE];
 } t_echo_request;
 
@@ -42,9 +47,9 @@ void get_ip_and_host(t_arguments *arguments, char ip_host[16], char dns_host[102
 unsigned short checksum(void *b, int len);
 int is_valid_ipv4(char *hostname);
 void convert_hostname_to_ip(const char *hostname, char *ip);
-void send_icmp_request(int sockfd, struct sockaddr_in *addr, struct icmp *icmphdr);
+void send_icmp_request(int sockfd, t_echo_request *echo_request);
 void print_ping_stats(struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockaddr_in *r_addr, int n_bytes);
-void create_icmp_packet(struct icmp *icmphdr);
+void create_icmp_packet(struct icmp *icmphdr, int seq);
 void create_address(struct sockaddr_in *addr, char *ip_host);
 int create_socket();
 int receive_reply(int sockfd);

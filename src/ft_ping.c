@@ -3,27 +3,22 @@
 
 void ft_ping(t_arguments *arguments)
 {
-	char dns_host[NI_MAXHOST];
-	char ip_host[INET_ADDRSTRLEN];
+	t_echo_request echo_request = {0};
 
-	get_ip_and_host(arguments, ip_host, dns_host);
+	get_ip_and_host(arguments, echo_request.ip_host, echo_request.dns_host);
 
-	log_message(DEBUG, "DNS Host: %s", dns_host);
-	log_message(DEBUG, "IP Host: %s", ip_host);
+	log_message(DEBUG, "DNS Host: %s", echo_request.dns_host);
+	log_message(DEBUG, "IP Host: %s", echo_request.ip_host);
 
 	int sockfd = create_socket();
 
 	struct sockaddr_in addr;
-	create_address(&addr, ip_host);
-
-	struct icmp icmphdr;
-	create_icmp_packet(&icmphdr);
-
-	printf("PING %s (%s) %ld(%ld) bytes of data.\n", dns_host, ip_host, sizeof(icmphdr.icmp_data), sizeof(icmphdr));
+	create_address(&addr, echo_request.ip_host);
+	echo_request.addr = &addr;
 
 	while (1)
 	{
-		send_icmp_request(sockfd, &addr, &icmphdr);
+		send_icmp_request(sockfd, &echo_request);
 		wait_and_receive_reply(sockfd);
 		sleep(1);
 	}
@@ -159,13 +154,17 @@ void create_address(struct sockaddr_in *addr, char *ip_host)
 * Function to create an ICMP ECHO_REQUEST packet
 * @param icmphdr: Pointer to the ICMP header
 */
-void create_icmp_packet(struct icmp *icmphdr)
+void create_icmp_packet(struct icmp *icmphdr, int seq)
 {
+    struct timeval time_sent;
+
 	memset(icmphdr, 0, sizeof(struct icmp));
 	icmphdr->icmp_type = ICMP_ECHO;
 	icmphdr->icmp_code = 0;
 	icmphdr->icmp_id = (getpid() & 0xFFFF); // 0xFFFF is a mask to get the last 16 bits
-	icmphdr->icmp_seq = 0;
+	icmphdr->icmp_seq = seq;
+	gettimeofday(&time_sent, NULL);
+    memcpy(icmphdr->icmp_data, &time_sent, sizeof(time_sent));
 	icmphdr->icmp_cksum = checksum(icmphdr, sizeof(struct icmp));
 }
 
@@ -193,23 +192,29 @@ void print_ping_stats(struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockadd
 * @param addr: Pointer to the sockaddr_in structure containing the address of the host
 * @param icmphdr: Pointer to the ICMP header
 */
-void send_icmp_request(int sockfd, struct sockaddr_in *addr, struct icmp *icmphdr)
+void send_icmp_request(int sockfd, t_echo_request *echo_request)
 {
-    struct timeval time_sent;
 	log_message(INFO, "Sending ICMP ECHO_REQUEST");
-    icmphdr->icmp_seq++;
-    icmphdr->icmp_cksum = 0;
-    gettimeofday(&time_sent, NULL);
-    memcpy(icmphdr->icmp_data, &time_sent, sizeof(time_sent));
-    icmphdr->icmp_cksum = checksum(icmphdr, sizeof(struct icmp));
 
-    if (sendto(sockfd, icmphdr, sizeof(*icmphdr), 0, (struct sockaddr *) addr, sizeof(*addr)) <= 0)
+	static int seq = 1;
+
+	struct icmp icmphdr;
+	create_icmp_packet(&icmphdr, seq);
+
+    if (sendto(sockfd, &icmphdr, sizeof(icmphdr), 0, (struct sockaddr *) echo_request->addr, sizeof(struct sockaddr_in)) <= 0)
     {
         perror("sendto");
         exit(EXIT_FAILURE);
     }
 
-    log_message(DEBUG, "ICMP ECHO_REQUEST sent to %s: icmp_seq%d", inet_ntoa(addr->sin_addr), icmphdr->icmp_seq);
+	if (icmphdr.icmp_seq == 1)
+	{
+		printf("PING %s (%s) %ld(%ld) bytes of data.\n", echo_request->dns_host, echo_request->ip_host, sizeof(icmphdr.icmp_data), sizeof(icmphdr));
+	}
+
+    log_message(DEBUG, "ICMP ECHO_REQUEST sent to %s: icmp_seq%d", inet_ntoa(echo_request->addr->sin_addr), icmphdr.icmp_seq);
+	
+	seq++;
 }
 
 /*
