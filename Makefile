@@ -6,7 +6,7 @@ CCXX        =   cc
 CXXFLAGS    =   -Wall -Werror -Wextra -std=c2x -g -I includes
 
 # Arguments
-ARGS    =   ""
+ARGS    =   localhost
 
 # Directories
 SRC_DIR = src

@@ -4,7 +4,8 @@
 #include "arg_parser.h"
 #include "ft_ping.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
 	t_arguments arguments;
 
