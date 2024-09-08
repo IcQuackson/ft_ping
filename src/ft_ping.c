@@ -1,9 +1,30 @@
 
 #include "ft_ping.h"
 
+t_ping_stats ping_stats = {
+    .packets_sent = 0,
+    .packets_received = 0,
+    .packets_lost = 0,
+    .min_rtt = INFINITY,  // Use INFINITY to ensure any actual RTT will be lower
+    .max_rtt = -INFINITY, // Use -INFINITY to ensure any actual RTT will be higher
+    .avg_rtt = 0,
+    .mdev = 0
+};
+
+struct timeval start_time, end_time;
+sent_packet_info sent_packets[MAX_SENT_PACKETS];
+t_echo_request echo_request = {0};
+int verbose = 0;
+
+/*
+* Function to start the ping process
+* @param arguments: Pointer to the t_arguments structure
+*/
 void ft_ping(t_arguments *arguments)
 {
-	t_echo_request echo_request = {0};
+	gettimeofday(&start_time, NULL);  // Capture the start time
+
+	verbose = arguments->options.verbose;
 
 	get_ip_and_host(arguments, echo_request.ip_host, echo_request.dns_host);
 
@@ -77,7 +98,7 @@ void wait_and_receive_reply(int sockfd)
 		}
 		else
 		{
-			printf("Request timed out.\n");
+			log_verbose("Request timed out\n");
 			valid_reply_received = 1;
 		}
 	}
@@ -107,14 +128,19 @@ int receive_reply(int sockfd)
 
 		log_message(DEBUG, "ICMP type: %d", icmp_hdr->icmp_type);
 
-		if (icmp_hdr->icmp_type == ICMP_ECHOREPLY)
+		if (icmp_hdr->icmp_type == ICMP_ECHOREPLY && (getpid() & 0xFFFF))
 		{
 			log_message(DEBUG, "ICMP ECHO_REPLY received: seq=%d\n", icmp_hdr->icmp_seq);
-
+			ping_stats.packets_received++;
 			print_ping_stats(icmp_hdr, ip_hdr, &r_addr, n);
-
 			return 1;
 		}
+		else
+		{
+			log_verbose("Other ICMP packet received\n");
+			return 1;
+		}
+
 	}
 	else
 	{
@@ -166,6 +192,11 @@ void create_icmp_packet(struct icmp *icmphdr, int seq)
 	gettimeofday(&time_sent, NULL);
     memcpy(icmphdr->icmp_data, &time_sent, sizeof(time_sent));
 	icmphdr->icmp_cksum = checksum(icmphdr, sizeof(struct icmp));
+
+	// Store packet send info
+    sent_packets[seq % MAX_SENT_PACKETS].seq = seq;
+    sent_packets[seq % MAX_SENT_PACKETS].send_time = time_sent;
+	sent_packets[seq % MAX_SENT_PACKETS].id = icmphdr->icmp_id;
 }
 
 /*
@@ -175,16 +206,60 @@ void create_icmp_packet(struct icmp *icmphdr, int seq)
 * @param r_addr: Pointer to the sockaddr_in structure containing the address of the sender
 * @param n_bytes: Number of bytes received
 */
-void print_ping_stats(struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockaddr_in *r_addr, int n_bytes)
-{
-	struct timeval time_received, rtt;
+void print_ping_stats(struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockaddr_in *r_addr, int n_bytes) {
+    struct timeval time_received, rtt;
     gettimeofday(&time_received, NULL);
 
-    struct timeval *time_sent_in_reply = (struct timeval *) icmphdr->icmp_data;
+    int seq_index = icmphdr->icmp_seq % MAX_SENT_PACKETS;
+    struct timeval *time_sent_in_reply = &sent_packets[seq_index].send_time;
 
-    timersub(&time_received, time_sent_in_reply, &rtt);
-    printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", n_bytes, inet_ntoa(r_addr->sin_addr), icmphdr->icmp_seq, ip_hdr->ttl, rtt.tv_sec * 1000.0 + rtt.tv_usec / 1000.0);
+    timersub(&time_received, time_sent_in_reply, &rtt); // Calculate RTT by subtracting the time the packet was sent from the time the reply was received. the measured time is in microseconds
+
+	double rtt_msec = (rtt.tv_sec * 1000.0) + (rtt.tv_usec / 1000.0);
+
+	update_ping_stats(rtt_msec);
+
+    printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", n_bytes, inet_ntoa(r_addr->sin_addr), icmphdr->icmp_seq, ip_hdr->ttl, rtt_msec);
 }
+
+/* 
+* Function to update the ping statistics
+* @param rtt_msec: Round-trip time in milliseconds
+*/
+void update_ping_stats(double rtt_msec)
+{
+	ping_stats.min_rtt = fmin(ping_stats.min_rtt, rtt_msec);
+    ping_stats.max_rtt = fmax(ping_stats.max_rtt, rtt_msec);
+
+	// Update average and variance (for mdev calculation)
+    double delta = rtt_msec - ping_stats.avg_rtt;
+    ping_stats.avg_rtt += delta / ping_stats.packets_received;
+    double delta2 = rtt_msec - ping_stats.avg_rtt;
+    ping_stats.mdev += delta * delta2;
+}
+
+/*
+* Function to print the final statistics of the ping process
+*/
+void print_final_stats() {
+    gettimeofday(&end_time, NULL);  // Capture the end time
+
+    long msec = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_usec - start_time.tv_usec) / 1000;
+
+    printf("\n--- %s ping statistics ---\n", echo_request.dns_host != NULL ? echo_request.dns_host : echo_request.ip_host);
+    printf("%d packets transmitted, %d received, %d%% packet loss, time %ldms\n", 
+        ping_stats.packets_sent, ping_stats.packets_received,
+        100 * (ping_stats.packets_sent - ping_stats.packets_received) / ping_stats.packets_sent,
+        msec);
+	
+	if (ping_stats.packets_received != 0)
+	{
+		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", 
+			ping_stats.min_rtt, ping_stats.avg_rtt, ping_stats.max_rtt, sqrt(ping_stats.mdev / (ping_stats.packets_received - 1)));
+	}
+}
+
+
 
 /*
 * Function to send an ICMP ECHO_REQUEST packet
@@ -206,6 +281,8 @@ void send_icmp_request(int sockfd, t_echo_request *echo_request)
         perror("sendto");
         exit(EXIT_FAILURE);
     }
+
+	ping_stats.packets_sent++;
 
 	if (icmphdr.icmp_seq == 1)
 	{
@@ -273,4 +350,30 @@ void convert_hostname_to_ip(const char *hostname, char *ip)
 		strncpy(ip, inet_ntoa(*addr_list[i]), INET_ADDRSTRLEN);
 		return;
 	}
+}
+
+/*
+* Function to log a message with a specific log level
+* @param level: Log level
+* @param message: Message to log
+*/
+void log_verbose(const char *message, ...)
+{
+	if (verbose)
+	{
+		va_list args;
+		va_start(args, message);
+		vprintf(message, args);
+		va_end(args);
+	}
+}
+
+/*
+* Signal handler for SIGINT (Ctrl+C) to print the final statistics and exit
+*/
+void sigint_handler(int signum)
+{
+	(void) signum;
+	print_final_stats();
+	exit(0);
 }

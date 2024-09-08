@@ -3,7 +3,8 @@ NAME    =   ft_ping
 
 # Compiler and flags
 CCXX        =   cc
-CXXFLAGS    =   -Wall -Werror -Wextra -std=c2x -g -I includes
+CXXFLAGS    =   -Wall -Werror -Wextra -std=c2x -lm -g -I includes
+LDFLAGS = -lm
 
 # Arguments
 ARGS    =   localhost
@@ -40,7 +41,7 @@ all:        $(NAME)
 
 $(NAME): $(OBJS)
 			@echo "$(CURSIVE)Compiling...$(DEFAULT)"
-			$(CCXX) $(CXXFLAGS) $(OBJS) -g -o $(NAME)
+			$(CCXX) $(OBJS) $(CXXFLAGS) $(LDFLAGS) -o $(NAME)
 			@echo "$(GREEN)$(NAME) created successfully!$(DEFAULT)"
 
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.c

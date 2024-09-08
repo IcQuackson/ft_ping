@@ -7,6 +7,8 @@
 int main(int argc, char *argv[])
 {
 
+    signal(SIGINT, sigint_handler);
+
 	t_arguments arguments;
 
     memset(&arguments, 0, sizeof(t_arguments));
