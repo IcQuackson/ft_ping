@@ -18,6 +18,7 @@ C_SRCS := $(SRC_DIR)/main.c \
 		  $(SRC_DIR)/arg_parser.c \
 		  $(SRC_DIR)/logger.c \
 		  $(SRC_DIR)/ft_ping.c \
+		  $(SRC_DIR)/options_handlers.c \
 
 # Script Files
 SCRIPT := $(SRC_DIR)/test_script.sh

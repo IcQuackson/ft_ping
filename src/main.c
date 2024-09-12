@@ -6,16 +6,13 @@
 
 int main(int argc, char *argv[])
 {
-
-    signal(SIGINT, sigint_handler);
-
 	t_arguments arguments;
 
+    signal(SIGINT, sigint_handler);
     memset(&arguments, 0, sizeof(t_arguments));
     parse_arguments(argc, argv, &arguments);
     check_arguments(&arguments);
 	//print_arguments(&arguments);
     ft_ping(&arguments);
-
-    return 0;
+    return EXIT_SUCCESS;
 }

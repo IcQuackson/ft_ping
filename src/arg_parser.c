@@ -5,25 +5,6 @@
 #include "arg_parser.h"
 #include "logger.h"
 
-void display_usage()
-{
-    printf("Usage: program [options]\n");
-    printf("  -v, --verbose             Increase verbosity\n");
-    printf("  -?, --help                Display this help message\n");
-    printf("  -f                        Option with f\n");
-    printf("  -l                        Option with l\n");
-    printf("  -n                        Option with n\n");
-    printf("  -w                        Option with w\n");
-    printf("  -W                        Option with W\n");
-    printf("  -p                        Option with p\n");
-    printf("  -r                        Option with r\n");
-    printf("  -s                        Option with s\n");
-    printf("  -T                        Option with T\n");
-    printf("      --ttl                 TTL option\n");
-    printf("      --ip-timestamp        IP timestamp option\n");
-}
-
-
 void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 {
 
@@ -43,19 +24,16 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 	{
         switch (opt) {
 			case 'v':
-				log_message(INFO, "Option -v selected");
-				arguments->options.verbose = 1;
+				handle_verbose(arguments);
 				break;
 			case '?':
-				display_usage();
-				exit(0);
+				handle_help();
+				break;
 			case 'f':
-				log_message(INFO, "Option -f selected");
-				arguments->options.f = 1;
+				handle_f(arguments);
 				break;
 			case 'l':
-				log_message(INFO, "Option -l selected");
-				arguments->options.l = 1;
+				handle_l(arguments);
 				break;
 			case 'n':
 				log_message(INFO, "Option -n selected");
@@ -86,26 +64,20 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 				arguments->options.T = 1;
 				break;
 			case 'c':
-				log_message(INFO, "Option -c with value '%s' selected", optarg);
-				arguments->options.c = 1;
-				arguments->count = atoi(optarg);
+				handle_c(arguments, optarg);
 				break;
 			case 0: // Case for long options without short equivalents
 				if (strcmp(long_options[option_index].name, "ttl") == 0)
 				{
-					log_message(INFO, "Option --ttl with value '%s' selected", optarg);
-					arguments->options.ttl = 1;
-					arguments->ttl = atoi(optarg);
+					handle_ttl(arguments, optarg);
 				}
 				else if (strcmp(long_options[option_index].name, "ip-timestamp") == 0)
 				{
-					log_message(INFO, "Option --ip-timestamp selected");
-					arguments->options.ip_timestamp = 1;
+					handle_ip_timestamp(arguments);
 				}
 				break;
 			default:
-				display_usage();
-				exit(EXIT_FAILURE);
+				handle_default();
 		}
     }
 
@@ -119,9 +91,9 @@ void check_arguments(t_arguments *arguments)
 		fprintf(stderr, "Invalid argument for -c. Must be a positive integer.\n");
 		exit(EXIT_FAILURE);
 	}
-	if (arguments->options.ttl == 1 && arguments->ttl <= 0)
+	if (arguments->options.ttl == 1 && (arguments->ttl <= 0 || arguments->ttl > 255))
 	{
-		fprintf(stderr, "Invalid argument for --ttl. Must be a positive integer.\n");
+		fprintf(stderr, "Invalid argument for --ttl. Must be 0 < ttl <= 255.\n");
 		exit(EXIT_FAILURE);
 	}
 }

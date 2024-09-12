@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <assert.h>
+#include "options_handlers.h"
 
 typedef struct s_options {
 	int verbose;
@@ -33,7 +34,6 @@ typedef struct s_arguments {
 	int ttl;
 } t_arguments;
 
-void display_usage();
 
 void parse_arguments(int argc, char *argv[], t_arguments *arguments);
 

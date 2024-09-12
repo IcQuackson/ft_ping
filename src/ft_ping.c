@@ -135,11 +135,6 @@ int receive_reply(int sockfd)
 			print_ping_stats(icmp_hdr, ip_hdr, &r_addr, n);
 			return 1;
 		}
-		else
-		{
-			log_verbose("Other ICMP packet received\n");
-			return 1;
-		}
 
 	}
 	else
