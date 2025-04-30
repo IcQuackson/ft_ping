@@ -41,6 +41,7 @@ typedef struct s_ping_stats {
 typedef struct s_echo_request {
 	struct icmp *icmphdr;
 	struct sockaddr_in *addr;
+	char user_input[NI_MAXHOST]; 
 	char dns_host[NI_MAXHOST];
 	char ip_host[INET_ADDRSTRLEN];
 	char data[PAYLOAD_SIZE];
@@ -53,10 +54,9 @@ typedef struct {
 } sent_packet_info;
 
 void ft_ping(t_arguments *arguments);
-void get_ip_and_host(t_arguments *arguments, char ip_host[16], char dns_host[1025]);
 unsigned short checksum(void *b, int len);
 int is_valid_ipv4(char *hostname);
-void convert_hostname_to_ip(const char *hostname, char *ip);
+int resolve(char *input, char ip_host[INET_ADDRSTRLEN], char dns_host[NI_MAXHOST]);
 void send_icmp_request(int sockfd, t_echo_request *echo_request);
 void print_ping_stats(struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockaddr_in *r_addr, int n_bytes);
 void update_ping_stats(double rtt_msec);

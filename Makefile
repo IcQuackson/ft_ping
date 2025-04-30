@@ -7,7 +7,7 @@ CXXFLAGS    =   -Wall -Werror -Wextra -std=c2x -lm -g -I includes
 LDFLAGS = -lm
 
 # Arguments
-ARGS    =   localhost
+ARGS    =   google.com
 
 # Directories
 SRC_DIR = src
@@ -62,7 +62,7 @@ re:         fclean all
 			@echo "$(MAGENTA)Cleaned and rebuilt!$(DEFAULT)"
 
 run: all
-	./$(NAME) $(ARGS)
+	sudo ./$(NAME) $(ARGS)
 
 rerun: re run
 

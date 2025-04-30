@@ -86,9 +86,10 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 
 void check_arguments(t_arguments *arguments)
 {
-	if (arguments->options.c == 1 && arguments->count <= 0)
+	if (arguments->options.c >= 1 && arguments->options.c > MAX_SENT_PACKETS)
 	{
-		fprintf(stderr, "Invalid argument for -c. Must be a positive integer.\n");
+		fprintf(stderr, "ping: usage error: Too many packets to send\n");
+		fprintf(stderr, "options.c= %d\n", arguments->options.c);
 		exit(EXIT_FAILURE);
 	}
 	if (arguments->options.ttl == 1 && (arguments->ttl <= 0 || arguments->ttl > 255))
@@ -139,6 +140,5 @@ void print_arguments(t_arguments *arguments)
 	printf("  s: %d\n", arguments->options.s);
 	printf("  T: %d\n", arguments->options.T);
 	printf("  c: %d\n", arguments->options.c);
-	printf("  count: %d\n", arguments->count);
 	printf("  ttl: %d\n", arguments->ttl);
 }

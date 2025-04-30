@@ -5,6 +5,8 @@ void log_message(int level, const char *message, ...) {
 	va_start(args, message);
 	char *level_str = NULL;
 
+	printf("\033[0m");
+
 	if (level >= LOG_LEVEL) {
 		switch (level) {
 			case DEBUG:

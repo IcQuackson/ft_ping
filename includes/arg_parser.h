@@ -1,6 +1,7 @@
 #ifndef ARG_PARSER_H
 #define ARG_PARSER_H
 
+#define MAX_SENT_PACKETS 65536
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +31,6 @@ typedef struct s_arguments {
 	t_options options;
 	char *host;
 	char *filename;
-	int count;
 	int ttl;
 } t_arguments;
 
