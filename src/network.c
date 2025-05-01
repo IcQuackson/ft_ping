@@ -3,52 +3,37 @@
 int resolve(char *input, char ip_host[INET_ADDRSTRLEN], char dns_host[NI_MAXHOST])
 {
 	struct in_addr ipv4;
-	struct sockaddr_in sa;
 	struct addrinfo hints = {0}, *res;
 
 	// Check if input is an IPv4 address
 	if (inet_pton(AF_INET, input, &ipv4) == 1)
 	{
-		sa.sin_family = AF_INET;
-		sa.sin_addr = ipv4;
-
-		strncpy(ip_host, input, INET_ADDRSTRLEN);
-
-		// Perform reverse lookup
-		if (getnameinfo((struct sockaddr *)&sa, sizeof sa, dns_host,
-						NI_MAXHOST, NULL, 0, NI_NAMEREQD) == 0)
-		{
-			return 0;
-		}
-		else
-		{
-			strcpy(dns_host, "[no PTR record]");
-			return 0;
-		}
+		strncpy(ip_host, ipv4.s_addr == INADDR_ANY ? "127.0.0.1" : input, INET_ADDRSTRLEN);
+		ip_host[INET_ADDRSTRLEN - 1] = '\0';
+		return 0;
 	}
 
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 
+	// Check if input is a hostname
 	if (getaddrinfo(input, NULL, &hints, &res) != 0)
 	{
-		return -1;
+		fprintf(stderr, "ping: %s: Name or service not known\n", input);
+		exit(EXIT_FAILURE);
 	}
 
 	struct sockaddr_in *ipv4_res = (struct sockaddr_in *)res->ai_addr;
 
+	// Convert the IP address to a string
 	if (inet_ntop(AF_INET, &ipv4_res->sin_addr, ip_host, INET_ADDRSTRLEN) == NULL)
 	{
 		freeaddrinfo(res);
 		return -1;
 	}
 
-	if (getnameinfo((struct sockaddr *)ipv4_res, sizeof(*ipv4_res),
-					dns_host, NI_MAXHOST, NULL, 0, NI_NAMEREQD) != 0)
-	{
-		strcpy(dns_host, "[no PTR record]");
-	}
-
+	getnameinfo((struct sockaddr *)ipv4_res, sizeof(*ipv4_res),
+				dns_host, NI_MAXHOST, NULL, 0, NI_NAMEREQD);
 	freeaddrinfo(res);
 	return 0;
 }

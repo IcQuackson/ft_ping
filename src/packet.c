@@ -36,7 +36,7 @@ void send_icmp_request(t_ping_ctx *ctx)
 
 	if (icmphdr.icmp_seq == 1)
 	{
-		printf("PING %s(%s (%s)) %ld(%ld) bytes of data.\n",
+		printf(!ctx->echo_request.dns_host[0] ? "PING %s%s (%s) %ld(%ld) bytes of data.\n" : "PING %s(%s (%s)) %ld(%ld) bytes of data.\n",
 			   ctx->echo_request.user_input,
 			   ctx->echo_request.dns_host,
 			   ctx->echo_request.ip_host,
