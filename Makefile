@@ -3,7 +3,7 @@ NAME    =   ft_ping
 
 # Compiler and flags
 CCXX        =   cc
-CXXFLAGS    =   -Wall -Werror -Wextra -std=c2x -lm -g -I includes
+CXXFLAGS    =   -Wall -Werror -Wextra -std=c2x -D_GNU_SOURCE -lm -g -I includes
 LDFLAGS = -lm
 
 # Arguments

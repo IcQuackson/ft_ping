@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     memset(&arguments, 0, sizeof(t_arguments));
     parse_arguments(argc, argv, &arguments);
     check_arguments(&arguments);
-	print_arguments(&arguments);
+	//print_arguments(&arguments);
     ft_ping(&arguments);
     return EXIT_SUCCESS;
 }
