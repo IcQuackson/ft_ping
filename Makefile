@@ -18,6 +18,9 @@ C_SRCS := $(SRC_DIR)/main.c \
 		  $(SRC_DIR)/arg_parser.c \
 		  $(SRC_DIR)/logger.c \
 		  $(SRC_DIR)/ft_ping.c \
+		  $(SRC_DIR)/stats.c \
+		  $(SRC_DIR)/network.c \
+		  $(SRC_DIR)/packet.c \
 		  $(SRC_DIR)/options_handlers.c \
 
 # Script Files
