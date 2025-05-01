@@ -8,7 +8,8 @@
 #include "arg_parser.h"
 #include "logger.h"
 
-// forward declaration of t_arguments
+#define DEFAULT_TTL 64
+
 typedef struct s_arguments t_arguments;
 
 void handle_verbose(t_arguments *arguments);
@@ -20,5 +21,6 @@ void handle_ip_timestamp(t_arguments *arguments);
 void handle_c(t_arguments *arguments, char *optarg);
 void handle_default();
 void display_usage();
+void set_default_arguments(t_arguments *arguments);
 
 #endif

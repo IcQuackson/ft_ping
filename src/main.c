@@ -3,6 +3,7 @@
 
 #include "arg_parser.h"
 #include "ft_ping.h"
+#include "options_handlers.h"
 
 int main(int argc, char *argv[])
 {

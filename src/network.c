@@ -40,7 +40,7 @@ int resolve(char *input, char ip_host[INET_ADDRSTRLEN], char dns_host[NI_MAXHOST
 
 int create_socket()
 {
-	int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP); // Create a raw socket to send ICMP packets
+	int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (sockfd < 0)
 	{
 		perror("socket");
@@ -54,4 +54,14 @@ void create_address(struct sockaddr_in *addr, char *ip_host)
 	memset(addr, 0, sizeof(struct sockaddr_in));
 	addr->sin_family = AF_INET;
 	inet_pton(AF_INET, ip_host, &addr->sin_addr);
+}
+
+void set_socket_ttl(t_ping_ctx *ctx, int ttl)
+{
+	if (setsockopt(ctx->sockfd, IPPROTO_IP, IP_TTL,
+				   &ttl, sizeof(ttl)) < 0)
+	{
+		perror("setsockopt(IP_TTL)");
+		exit(EXIT_FAILURE);
+	}
 }

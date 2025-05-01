@@ -28,7 +28,7 @@ void send_icmp_request(t_ping_ctx *ctx)
 			   (struct sockaddr *)ctx->echo_request.addr,
 			   sizeof(struct sockaddr_in)) <= 0)
 	{
-		perror("sendto");
+		perror("ping: connect");
 		exit(EXIT_FAILURE);
 	}
 

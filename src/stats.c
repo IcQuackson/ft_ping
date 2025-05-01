@@ -1,6 +1,6 @@
 #include "ft_ping.h"
 
-void print_ping_stats(t_ping_ctx *ctx, struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockaddr_in *r_addr, int n_bytes)
+void print_ping_stats(t_ping_ctx *ctx, struct icmp *icmphdr, struct sockaddr_in *r_addr, int n_bytes)
 {
 	struct timeval time_received, rtt;
 	gettimeofday(&time_received, NULL);
@@ -18,7 +18,7 @@ void print_ping_stats(t_ping_ctx *ctx, struct icmp *icmphdr, struct iphdr *ip_hd
 		   n_bytes,
 		   inet_ntoa(r_addr->sin_addr),
 		   icmphdr->icmp_seq,
-		   ip_hdr->ttl,
+		   ctx->arguments->options.ttl,
 		   rtt_msec);
 }
 

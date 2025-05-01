@@ -28,8 +28,7 @@ void handle_l(t_arguments *arguments)
 void handle_ttl(t_arguments *arguments, char *optarg)
 {
 	log_message(INFO, "Option --ttl selected with value %s", optarg);
-	arguments->options.ttl = 1;
-	arguments->ttl = atoi(optarg);
+	arguments->options.ttl = atoi(optarg);
 }
 
 void handle_ip_timestamp(t_arguments *arguments)
@@ -48,6 +47,23 @@ void handle_default()
 {
 	display_usage();
 	exit(EXIT_FAILURE);
+}
+
+void set_default_arguments(t_arguments *arguments)
+{
+	arguments->options.verbose = 0;
+	arguments->options.ttl = DEFAULT_TTL;
+	arguments->options.ip_timestamp = 0;
+	arguments->options.f = 0;
+	arguments->options.l = 0;
+	arguments->options.n = 0;
+	arguments->options.w = 0;
+	arguments->options.W = 0;
+	arguments->options.p = 0;
+	arguments->options.r = 0;
+	arguments->options.s = 0;
+	arguments->options.T = 0;
+	arguments->options.c = 0;
 }
 
 void display_usage()

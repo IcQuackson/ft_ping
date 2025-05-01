@@ -2,10 +2,12 @@
 
 static t_ping_ctx *global_ctx = NULL;
 
+
 void ft_ping(t_arguments *arguments)
 {
 	t_ping_ctx ctx = {0};
 	global_ctx = &ctx;
+	ctx.arguments = arguments;
 
 	signal(SIGINT, sigint_handler);
 
@@ -20,6 +22,9 @@ void ft_ping(t_arguments *arguments)
 	log_message(DEBUG, "IP Host: %s", ctx.echo_request.ip_host);
 
 	ctx.sockfd = create_socket();
+	// log ttl
+	log_message(INFO, "ttl: %d", arguments->options.ttl);
+	set_socket_ttl(&ctx, arguments->options.ttl ? arguments->options.ttl : DEFAULT_TTL);
 	struct sockaddr_in addr;
 	create_address(&addr, ctx.echo_request.ip_host);
 	ctx.echo_request.addr = &addr;
@@ -88,7 +93,7 @@ int receive_reply(t_ping_ctx *ctx)
 		{
 			log_message(DEBUG, "ICMP ECHO_REPLY received: seq=%d\n", icmp_hdr->icmp_seq);
 			ctx->stats.packets_received++;
-			print_ping_stats(ctx, icmp_hdr, ip_hdr, &r_addr, n);
+			print_ping_stats(ctx, icmp_hdr, &r_addr, n);
 			return 1;
 		}
 	}

@@ -55,6 +55,7 @@ typedef struct
 
 typedef struct s_ping_ctx
 {
+	t_arguments *arguments;
 	t_ping_stats stats;
 	sent_packet_info sent_packets[MAX_SENT_PACKETS];
 	struct timeval start_time;
@@ -64,31 +65,28 @@ typedef struct s_ping_ctx
 	int sockfd;
 } t_ping_ctx;
 
-// Main entry point
 void ft_ping(t_arguments *arguments);
+int receive_reply(t_ping_ctx *ctx);
+void wait_and_receive_reply(t_ping_ctx *ctx);
+void log_verbose(const char *message, ...);
+void sigint_handler(int signum);
 
 // Socket/Network
 int create_socket();
+void set_socket_ttl(t_ping_ctx *ctx, int ttl);
 void create_address(struct sockaddr_in *addr, char *ip_host);
 int resolve(char *input, char ip_host[INET_ADDRSTRLEN], char dns_host[NI_MAXHOST]);
-int is_valid_ipv4(char *hostname);
 
-// ICMP
+// Packet
 unsigned short checksum(void *b, int len);
 void create_icmp_packet(t_ping_ctx *ctx, struct icmp *icmphdr, int seq);
 void send_icmp_request(t_ping_ctx *ctx);
-int receive_reply(t_ping_ctx *ctx);
-void wait_and_receive_reply(t_ping_ctx *ctx);
 
 // Stats
 void update_ping_stats(t_ping_ctx *ctx, double rtt_msec);
-void print_ping_stats(t_ping_ctx *ctx, struct icmp *icmphdr, struct iphdr *ip_hdr, struct sockaddr_in *r_addr, int n_bytes);
+void print_ping_stats(t_ping_ctx *ctx, struct icmp *icmphdr, struct sockaddr_in *r_addr, int n_bytes);
 void print_final_stats(t_ping_ctx *ctx);
 
-// Logging
-void log_verbose(const char *message, ...);
 
-// Signal handling
-void sigint_handler(int signum);
 
 #endif // FT_PING_H

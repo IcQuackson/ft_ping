@@ -31,7 +31,6 @@ typedef struct s_arguments {
 	t_options options;
 	char *host;
 	char *filename;
-	int ttl;
 } t_arguments;
 
 

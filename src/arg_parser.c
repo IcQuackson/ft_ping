@@ -20,7 +20,9 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "v?flnwWprTsTc:", long_options, &option_index)) != -1)
+	set_default_arguments(arguments);
+
+    while ((opt = getopt_long(argc, argv, "v?flnwWprsTc:", long_options, &option_index)) != -1)
 	{
         switch (opt) {
 			case 'v':
@@ -66,7 +68,7 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 			case 'c':
 				handle_c(arguments, optarg);
 				break;
-			case 0: // Case for long options without short equivalents
+			case 0:
 				if (strcmp(long_options[option_index].name, "ttl") == 0)
 				{
 					handle_ttl(arguments, optarg);
@@ -92,7 +94,7 @@ void check_arguments(t_arguments *arguments)
 		fprintf(stderr, "options.c= %d\n", arguments->options.c);
 		exit(EXIT_FAILURE);
 	}
-	if (arguments->options.ttl == 1 && (arguments->ttl <= 0 || arguments->ttl > 255))
+	if (arguments->options.ttl < 1 || arguments->options.ttl > 255)
 	{
 		fprintf(stderr, "Invalid argument for --ttl. Must be 0 < ttl <= 255.\n");
 		exit(EXIT_FAILURE);
@@ -140,5 +142,5 @@ void print_arguments(t_arguments *arguments)
 	printf("  s: %d\n", arguments->options.s);
 	printf("  T: %d\n", arguments->options.T);
 	printf("  c: %d\n", arguments->options.c);
-	printf("  ttl: %d\n", arguments->ttl);
+	printf("  ttl: %d\n", arguments->options.ttl);
 }
