@@ -26,6 +26,7 @@
 #define NI_MAXHOST 1025	   // Maximum length of a hostname
 #define INET_ADDRSTRLEN 16 // Maximum length of an IPv4 address
 #define MAX_SENT_PACKETS 65536
+#define ICMP_HEADER_LEN 28
 
 typedef struct s_ping_stats
 {
@@ -63,6 +64,7 @@ typedef struct s_ping_ctx
 	t_echo_request echo_request;
 	int verbose;
 	int sockfd;
+	int payload_size;
 } t_ping_ctx;
 
 void ft_ping(t_arguments *arguments);
@@ -79,7 +81,7 @@ int resolve(char *input, char ip_host[INET_ADDRSTRLEN], char dns_host[NI_MAXHOST
 
 // Packet
 unsigned short checksum(void *b, int len);
-void create_icmp_packet(t_ping_ctx *ctx, struct icmp *icmphdr, int seq);
+struct icmp *create_icmp_packet(t_ping_ctx *ctx, int seq);
 void send_icmp_request(t_ping_ctx *ctx);
 
 // Stats

@@ -43,6 +43,12 @@ void handle_c(t_arguments *arguments, char *optarg)
 	arguments->options.c = atoi(optarg);
 }
 
+void handle_s(t_arguments *arguments, char *optarg)
+{
+	log_message(INFO, "Option -s selected with value %s", optarg);
+	arguments->options.c = atoi(optarg);
+}
+
 void handle_default()
 {
 	display_usage();
@@ -61,7 +67,7 @@ void set_default_arguments(t_arguments *arguments)
 	arguments->options.W = 0;
 	arguments->options.p = 0;
 	arguments->options.r = 0;
-	arguments->options.s = 0;
+	arguments->options.s = 56;
 	arguments->options.T = 0;
 	arguments->options.c = 0;
 }

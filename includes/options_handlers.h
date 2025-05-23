@@ -19,6 +19,7 @@ void handle_l(t_arguments *arguments);
 void handle_ttl(t_arguments *arguments, char *optarg);
 void handle_ip_timestamp(t_arguments *arguments);
 void handle_c(t_arguments *arguments, char *optarg);
+void handle_s(t_arguments *arguments, char *optarg);
 void handle_default();
 void display_usage();
 void set_default_arguments(t_arguments *arguments);

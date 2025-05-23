@@ -2,12 +2,17 @@
 
 static t_ping_ctx *global_ctx = NULL;
 
+static void pass_args_to_ctx(t_arguments *arguments, t_ping_ctx *ctx) {
+	ctx->payload_size = arguments->options.s;
+}
+
 
 void ft_ping(t_arguments *arguments)
 {
 	t_ping_ctx ctx = {0};
 	global_ctx = &ctx;
 	ctx.arguments = arguments;
+	pass_args_to_ctx(arguments, &ctx);
 
 	signal(SIGINT, sigint_handler);
 
@@ -22,7 +27,6 @@ void ft_ping(t_arguments *arguments)
 	log_message(DEBUG, "IP Host: %s", ctx.echo_request.ip_host);
 
 	ctx.sockfd = create_socket();
-	// log ttl
 	log_message(INFO, "ttl: %d", arguments->options.ttl);
 	set_socket_ttl(&ctx, arguments->options.ttl ? arguments->options.ttl : DEFAULT_TTL);
 	struct sockaddr_in addr;
@@ -52,6 +56,8 @@ void wait_and_receive_reply(t_ping_ctx *ctx)
 		tv.tv_sec = TIMEOUT;
 		tv.tv_usec = 0;
 
+		// log sockfd
+		log_message(DEBUG, "sockfd: %d", ctx->sockfd);
 		int retval = select(ctx->sockfd + 1, &readfds, NULL, NULL, &tv);
 		log_message(DEBUG, "Select returned %d", retval);
 		if (retval == -1)
@@ -70,6 +76,7 @@ void wait_and_receive_reply(t_ping_ctx *ctx)
 			valid_reply_received = 1;
 		}
 	}
+
 }
 
 int receive_reply(t_ping_ctx *ctx)

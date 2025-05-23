@@ -59,6 +59,7 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 				break;
 			case 's':
 				log_message(INFO, "Option -s selected");
+				handle_s(arguments, optarg);
 				arguments->options.s = 1;
 				break;
 			case 'T':
@@ -97,6 +98,11 @@ void check_arguments(t_arguments *arguments)
 	if (arguments->options.ttl < 1 || arguments->options.ttl > 255)
 	{
 		fprintf(stderr, "Invalid argument for --ttl. Must be 0 < ttl <= 255.\n");
+		exit(EXIT_FAILURE);
+	}
+	if (arguments->options.s < 1)
+	{
+		fprintf(stderr, "Invalid argument for -s. Packet size must be greater than 0\n");
 		exit(EXIT_FAILURE);
 	}
 }

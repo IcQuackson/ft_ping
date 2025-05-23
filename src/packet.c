@@ -1,30 +1,39 @@
 #include "ft_ping.h"
 
-void create_icmp_packet(t_ping_ctx *ctx, struct icmp *icmphdr, int seq)
+struct icmp *create_icmp_packet(t_ping_ctx *ctx, int seq)
 {
+	struct icmp *icmp_pkt = NULL;
 	struct timeval time_sent;
+	int packet_len = sizeof(struct icmp) + ctx->payload_size;
 
-	memset(icmphdr, 0, sizeof(struct icmp));
-	icmphdr->icmp_type = ICMP_ECHO;
-	icmphdr->icmp_code = 0;
-	icmphdr->icmp_id = (getpid() & 0xFFFF); // 0xFFFF is a mask to get the last 16 bits
-	icmphdr->icmp_seq = seq;
+	icmp_pkt = malloc(packet_len);
+	if (!icmp_pkt) {
+		exit(EXIT_FAILURE);
+	}
+	memset(icmp_pkt, 0, packet_len);
+	icmp_pkt->icmp_type = ICMP_ECHO;
+	icmp_pkt->icmp_code = 0;
+	icmp_pkt->icmp_id = (getpid() & 0xFFFF); // 0xFFFF is a mask to get the last 16 bits
+	icmp_pkt->icmp_seq = seq;
 	gettimeofday(&time_sent, NULL);
-	memcpy(icmphdr->icmp_data, &time_sent, sizeof(time_sent));
-	icmphdr->icmp_cksum = checksum(icmphdr, sizeof(struct icmp));
+	
+	memcpy(icmp_pkt->icmp_data, &time_sent, sizeof(time_sent));
+	icmp_pkt->icmp_cksum = checksum(icmp_pkt, packet_len);
 
 	ctx->sent_packets[seq % MAX_SENT_PACKETS].seq = seq;
 	ctx->sent_packets[seq % MAX_SENT_PACKETS].send_time = time_sent;
-	ctx->sent_packets[seq % MAX_SENT_PACKETS].id = icmphdr->icmp_id;
+	ctx->sent_packets[seq % MAX_SENT_PACKETS].id = icmp_pkt->icmp_id;
+	
+	return icmp_pkt;
 }
 
 void send_icmp_request(t_ping_ctx *ctx)
 {
 	static int seq = 1;
-	struct icmp icmphdr;
-	create_icmp_packet(ctx, &icmphdr, seq);
+	struct icmp *icmp_pkt = create_icmp_packet(ctx, seq);
 
-	if (sendto(ctx->sockfd, &icmphdr, sizeof(icmphdr), 0,
+
+	if (sendto(ctx->sockfd, icmp_pkt, ICMP_HEADER_LEN + ctx->payload_size, 0,
 			   (struct sockaddr *)ctx->echo_request.addr,
 			   sizeof(struct sockaddr_in)) <= 0)
 	{
@@ -34,21 +43,22 @@ void send_icmp_request(t_ping_ctx *ctx)
 
 	ctx->stats.packets_sent++;
 
-	if (icmphdr.icmp_seq == 1)
+	if (icmp_pkt->icmp_seq == 1)
 	{
-		printf(!ctx->echo_request.dns_host[0] ? "PING %s%s (%s) %ld(%ld) bytes of data.\n" : "PING %s(%s (%s)) %ld(%ld) bytes of data.\n",
+		printf(!ctx->echo_request.dns_host[0] ? "PING %s%s (%s) %d(%d) bytes of data.\n" : "PING %s(%s (%s)) %d(%d) bytes of data.\n",
 			   ctx->echo_request.user_input,
 			   ctx->echo_request.dns_host,
 			   ctx->echo_request.ip_host,
-			   sizeof(icmphdr.icmp_data),
-			   sizeof(icmphdr));
+			   ctx->payload_size,
+			   ICMP_HEADER_LEN + ctx->payload_size);
 	}
 
 	log_message(DEBUG, "ICMP ECHO_REQUEST sent to %s: icmp_seq=%d",
 				inet_ntoa(ctx->echo_request.addr->sin_addr),
-				icmphdr.icmp_seq);
+				icmp_pkt->icmp_seq);
 
 	seq++;
+	free(icmp_pkt);
 }
 
 /*

@@ -15,7 +15,7 @@
 #define WARN_COLOR "\033[0;33m"
 #define ERROR_COLOR "\033[0;31m"
 
-#define LOG_LEVEL INFO
+#define LOG_LEVEL NO_LOG
 
 void log_message(int level, const char *message, ...);
 
