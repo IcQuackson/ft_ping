@@ -26,7 +26,8 @@
 #define NI_MAXHOST 1025	   // Maximum length of a hostname
 #define INET_ADDRSTRLEN 16 // Maximum length of an IPv4 address
 #define MAX_SENT_PACKETS 65536
-#define ICMP_HEADER_LEN 28
+#define IP_HEADER_LEN 20
+#define ICMP_HEADER_LEN 8
 
 typedef struct s_ping_stats
 {

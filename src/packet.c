@@ -4,7 +4,7 @@ struct icmp *create_icmp_packet(t_ping_ctx *ctx, int seq)
 {
 	struct icmp *icmp_pkt = NULL;
 	struct timeval time_sent;
-	int packet_len = sizeof(struct icmp) + ctx->payload_size;
+	int packet_len = 8 + ctx->payload_size;
 
 	icmp_pkt = malloc(packet_len);
 	if (!icmp_pkt) {
@@ -16,6 +16,8 @@ struct icmp *create_icmp_packet(t_ping_ctx *ctx, int seq)
 	icmp_pkt->icmp_id = (getpid() & 0xFFFF); // 0xFFFF is a mask to get the last 16 bits
 	icmp_pkt->icmp_seq = seq;
 	gettimeofday(&time_sent, NULL);
+
+	log_message(DEBUG, "time_sent: %d\n", time_sent.tv_sec);
 	
 	memcpy(icmp_pkt->icmp_data, &time_sent, sizeof(time_sent));
 	icmp_pkt->icmp_cksum = checksum(icmp_pkt, packet_len);
@@ -32,8 +34,7 @@ void send_icmp_request(t_ping_ctx *ctx)
 	static int seq = 1;
 	struct icmp *icmp_pkt = create_icmp_packet(ctx, seq);
 
-
-	if (sendto(ctx->sockfd, icmp_pkt, ICMP_HEADER_LEN + ctx->payload_size, 0,
+	if (sendto(ctx->sockfd, icmp_pkt, 8 + ctx->payload_size, 0,
 			   (struct sockaddr *)ctx->echo_request.addr,
 			   sizeof(struct sockaddr_in)) <= 0)
 	{
@@ -50,7 +51,7 @@ void send_icmp_request(t_ping_ctx *ctx)
 			   ctx->echo_request.dns_host,
 			   ctx->echo_request.ip_host,
 			   ctx->payload_size,
-			   ICMP_HEADER_LEN + ctx->payload_size);
+			   IP_HEADER_LEN + ICMP_HEADER_LEN + ctx->payload_size);
 	}
 
 	log_message(DEBUG, "ICMP ECHO_REQUEST sent to %s: icmp_seq=%d",

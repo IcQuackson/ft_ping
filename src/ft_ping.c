@@ -56,10 +56,7 @@ void wait_and_receive_reply(t_ping_ctx *ctx)
 		tv.tv_sec = TIMEOUT;
 		tv.tv_usec = 0;
 
-		// log sockfd
-		log_message(DEBUG, "sockfd: %d", ctx->sockfd);
 		int retval = select(ctx->sockfd + 1, &readfds, NULL, NULL, &tv);
-		log_message(DEBUG, "Select returned %d", retval);
 		if (retval == -1)
 		{
 			perror("select");
@@ -90,17 +87,22 @@ int receive_reply(t_ping_ctx *ctx)
 	if (n > 0)
 	{
 		recv_buff[n] = 0;
-		log_message(DEBUG, "Received %d bytes", n);
 		struct iphdr *ip_hdr = (struct iphdr *)recv_buff;						 // Get the IP header
-		struct icmp *icmp_hdr = (struct icmp *)(recv_buff + (ip_hdr->ihl << 2)); // Get the ICMP header by skipping the IP header
+		struct icmp *icmp_pkt = (struct icmp *)(recv_buff + (ip_hdr->ihl << 2)); // Get the ICMP by skipping the IP header
+		int icmp_pkt_len = n - (ip_hdr->ihl << 2);
+		log_message(DEBUG, "Received %d bytes icmp", icmp_pkt_len);
+		
+		log_message(DEBUG, "ICMP type: %d", icmp_pkt->icmp_type);
+		
+		struct timeval *time_sent = (struct timeval *) icmp_pkt->icmp_data;
 
-		log_message(DEBUG, "ICMP type: %d", icmp_hdr->icmp_type);
+		log_message(DEBUG, "ICMP data: %d", time_sent->tv_sec);
 
-		if (icmp_hdr->icmp_type == ICMP_ECHOREPLY && (getpid() & 0xFFFF))
+		if (icmp_pkt->icmp_type == ICMP_ECHOREPLY && (getpid() & 0xFFFF))
 		{
-			log_message(DEBUG, "ICMP ECHO_REPLY received: seq=%d\n", icmp_hdr->icmp_seq);
+			log_message(DEBUG, "ICMP ECHO_REPLY received: seq=%d\n", icmp_pkt->icmp_seq);
 			ctx->stats.packets_received++;
-			print_ping_stats(ctx, icmp_hdr, &r_addr, n);
+			print_ping_stats(ctx, icmp_pkt, &r_addr, icmp_pkt_len);
 			return 1;
 		}
 	}
