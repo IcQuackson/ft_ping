@@ -22,7 +22,7 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 
 	set_default_arguments(arguments);
 
-    while ((opt = getopt_long(argc, argv, "v?flnwWprsTc:", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc, argv, "v?flnwWprs:Tc:", long_options, &option_index)) != -1)
 	{
         switch (opt) {
 			case 'v':
@@ -60,7 +60,6 @@ void parse_arguments(int argc, char *argv[], t_arguments *arguments)
 			case 's':
 				log_message(INFO, "Option -s selected");
 				handle_s(arguments, optarg);
-				arguments->options.s = 1;
 				break;
 			case 'T':
 				log_message(INFO, "Option -T selected");
@@ -100,7 +99,7 @@ void check_arguments(t_arguments *arguments)
 		fprintf(stderr, "Invalid argument for --ttl. Must be 0 < ttl <= 255.\n");
 		exit(EXIT_FAILURE);
 	}
-	if (arguments->options.s < 1)
+	if (arguments->options.s < 0 || arguments->options.s > 2147483647)
 	{
 		fprintf(stderr, "Invalid argument for -s. Packet size must be greater than 0\n");
 		exit(EXIT_FAILURE);

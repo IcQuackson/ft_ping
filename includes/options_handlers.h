@@ -5,9 +5,15 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 #include "arg_parser.h"
 #include "logger.h"
 
+#define MAX_PACKET_SIZE INT_MAX
+#define MAX_PACKETS_TO_SEND 1000000
+#define TTL_MIN 1
+#define TTL_MAX 255
 #define DEFAULT_TTL 64
 
 typedef struct s_arguments t_arguments;

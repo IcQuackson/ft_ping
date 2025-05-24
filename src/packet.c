@@ -3,7 +3,6 @@
 struct icmp *create_icmp_packet(t_ping_ctx *ctx, int seq)
 {
 	struct icmp *icmp_pkt = NULL;
-	struct timeval time_sent;
 	int packet_len = 8 + ctx->payload_size;
 
 	icmp_pkt = malloc(packet_len);
@@ -15,15 +14,9 @@ struct icmp *create_icmp_packet(t_ping_ctx *ctx, int seq)
 	icmp_pkt->icmp_code = 0;
 	icmp_pkt->icmp_id = (getpid() & 0xFFFF); // 0xFFFF is a mask to get the last 16 bits
 	icmp_pkt->icmp_seq = seq;
-	gettimeofday(&time_sent, NULL);
-
-	log_message(DEBUG, "time_sent: %d\n", time_sent.tv_sec);
-	
-	memcpy(icmp_pkt->icmp_data, &time_sent, sizeof(time_sent));
 	icmp_pkt->icmp_cksum = checksum(icmp_pkt, packet_len);
 
 	ctx->sent_packets[seq % MAX_SENT_PACKETS].seq = seq;
-	ctx->sent_packets[seq % MAX_SENT_PACKETS].send_time = time_sent;
 	ctx->sent_packets[seq % MAX_SENT_PACKETS].id = icmp_pkt->icmp_id;
 	
 	return icmp_pkt;
@@ -41,6 +34,10 @@ void send_icmp_request(t_ping_ctx *ctx)
 		perror("ping: connect");
 		exit(EXIT_FAILURE);
 	}
+
+	struct timeval time_sent;
+	gettimeofday(&time_sent, NULL);
+	ctx->sent_packets[seq % MAX_SENT_PACKETS].send_time = time_sent;
 
 	ctx->stats.packets_sent++;
 

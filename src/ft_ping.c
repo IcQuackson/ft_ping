@@ -93,10 +93,6 @@ int receive_reply(t_ping_ctx *ctx)
 		log_message(DEBUG, "Received %d bytes icmp", icmp_pkt_len);
 		
 		log_message(DEBUG, "ICMP type: %d", icmp_pkt->icmp_type);
-		
-		struct timeval *time_sent = (struct timeval *) icmp_pkt->icmp_data;
-
-		log_message(DEBUG, "ICMP data: %d", time_sent->tv_sec);
 
 		if (icmp_pkt->icmp_type == ICMP_ECHOREPLY && (getpid() & 0xFFFF))
 		{
